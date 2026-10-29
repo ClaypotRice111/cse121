@@ -1,0 +1,12 @@
+Command: cmake -G Ninja -B /home/huang/esp/lab2_1/build -DPYTHON_DEPS_CHECKED=1 -DPYTHON=/home/huang/.espressif/python_env/idf6.2_py3.12_env/bin/python -DESP_PLATFORM=1 -DCCACHE_ENABLE=False -DCONFIGDEP_ENABLE=True /home/huang/esp/lab2_1
+-- IDF_TARGET not set, using default target: esp32
+-- Found Git: /usr/bin/git (found version "2.43.0") 
+-- Minimal build - OFF
+-- esp-idf-configdep will be used for faster recompilation
+-- Compiler launcher chain: esp-idf-configdep
+-- The C compiler identification is unknown
+-- The CXX compiler identification is unknown
+-- The ASM compiler identification is unknown
+-- Found assembler: xtensa-esp32-elf-gcc
+-- Warning: Did not find file Compiler/-ASM
+-- Configuring incomplete, errors occurred!

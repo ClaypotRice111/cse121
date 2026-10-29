@@ -1,0 +1,43 @@
+Command: cmake -G Ninja -B /home/huang/esp/lab2_1/build -DPYTHON_DEPS_CHECKED=1 -DPYTHON=/home/huang/.espressif/python_env/idf6.2_py3.12_env/bin/python -DESP_PLATFORM=1 -DCCACHE_ENABLE=False -DCONFIGDEP_ENABLE=True /home/huang/esp/lab2_1
+CMake Error at /home/huang/esp/esp-idf/tools/cmake/project.cmake:753 (__project):
+  The CMAKE_C_COMPILER:
+
+    xtensa-esp32-elf-gcc
+
+  is not a full path and was not found in the PATH.
+
+  Tell CMake where to find the compiler by setting either the environment
+  variable "CC" or the CMake cache entry CMAKE_C_COMPILER to the full path to
+  the compiler, or to the compiler name if it is in the PATH.
+Call Stack (most recent call first):
+  CMakeLists.txt:6 (project)
+
+
+CMake Error at /home/huang/esp/esp-idf/tools/cmake/project.cmake:753 (__project):
+  The CMAKE_CXX_COMPILER:
+
+    xtensa-esp32-elf-g++
+
+  is not a full path and was not found in the PATH.
+
+  Tell CMake where to find the compiler by setting either the environment
+  variable "CXX" or the CMake cache entry CMAKE_CXX_COMPILER to the full path
+  to the compiler, or to the compiler name if it is in the PATH.
+Call Stack (most recent call first):
+  CMakeLists.txt:6 (project)
+
+
+CMake Error at /home/huang/esp/esp-idf/tools/cmake/project.cmake:753 (__project):
+  The CMAKE_ASM_COMPILER:
+
+    xtensa-esp32-elf-gcc
+
+  is not a full path and was not found in the PATH.
+
+  Tell CMake where to find the compiler by setting either the environment
+  variable "ASM" or the CMake cache entry CMAKE_ASM_COMPILER to the full path
+  to the compiler, or to the compiler name if it is in the PATH.
+Call Stack (most recent call first):
+  CMakeLists.txt:6 (project)
+
+

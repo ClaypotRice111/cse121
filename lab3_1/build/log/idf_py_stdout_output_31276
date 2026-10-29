@@ -1,0 +1,43 @@
+Command: ninja all
+[1/23] Linking C static library esp-idf/esp_phy/libesp_phy.a
+[2/23] Linking C static library esp-idf/esp_http_client/libesp_http_client.a
+[3/23] Linking C static library esp-idf/spiffs/libspiffs.a
+[4/23] Linking C static library esp-idf/fatfs/libfatfs.a
+[5/23] Linking C static library esp-idf/esp_hid/libesp_hid.a
+[6/23] Linking C static library esp-idf/protocomm/libprotocomm.a
+[7/23] Extracting error codes for esp_https_ota
+[8/23] Linking C static library esp-idf/esp_local_ctrl/libesp_local_ctrl.a
+[9/23] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/lab3_1.cpp.obj
+[10/23] Generating error code table for esp_https_ota
+[11/23] Performing build step for 'bootloader'
+[1/1] cd /home/huang/library/cse121/lab3_1/build/bootloader && /home/huang/.espressif/python_env/idf6.2_py3.12_env/bin/python /home/huang/esp/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 /home/huang/library/cse121/lab3_1/build/bootloader/bootloader.bin
+Bootloader binary size 0x5240 bytes. 0x2dc0 bytes (36%) free.
+[12/23] No install step for 'bootloader'
+[13/23] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/DFRobot_LCD.cpp.obj
+[14/23] Completed 'bootloader'
+[15/23] Linking C static library esp-idf/main/libmain.a
+[16/23] Building C object esp-idf/esp_https_ota/CMakeFiles/__idf_esp_https_ota.dir/__/__/esp_err_codes/esp_https_ota_esp_err_codes.c.obj
+[17/23] Building C object esp-idf/esp_https_ota/CMakeFiles/__idf_esp_https_ota.dir/src/esp_https_ota.c.obj
+[18/23] Linking C static library esp-idf/esp_https_ota/libesp_https_ota.a
+[19/23] Generating esp-idf/esp_system/ld/sections.ld
+NOTE: /home/huang/esp/esp-idf/components/bootloader/Kconfig.projbuild:383: Deprecation notice: hex literal '0' without '0x' prefix detected. In the next major version, hex literals will be required to have a '0x' prefix.
+NOTE: /home/huang/esp/esp-idf/components/bootloader/Kconfig.projbuild:423: Deprecation notice: hex literal '0' without '0x' prefix detected. In the next major version, hex literals will be required to have a '0x' prefix.
+NOTE: /home/huang/esp/esp-idf/components/bt/common/Kconfig.in:192: Deprecation notice: hex literal '0' without '0x' prefix detected. In the next major version, hex literals will be required to have a '0x' prefix.
+NOTE: /home/huang/esp/esp-idf/components/bt/host/bluedroid/Kconfig.in:68: Choice symbol BT_ENC_KEY_SIZE_CTRL_STD (member of BT_ENC_KEY_SIZE_CTRL_ENABLED choice) is defined with a warning, which has no effect for choice symbols.
+NOTE: /home/huang/esp/esp-idf/components/bt/host/bluedroid/Kconfig.in:74: Choice symbol BT_ENC_KEY_SIZE_CTRL_VSC (member of BT_ENC_KEY_SIZE_CTRL_ENABLED choice) is defined with a warning, which has no effect for choice symbols.
+NOTE: /home/huang/esp/esp-idf/components/bt/host/bluedroid/Kconfig.in:81: Choice symbol BT_ENC_KEY_SIZE_CTRL_NONE (member of BT_ENC_KEY_SIZE_CTRL_ENABLED choice) is defined with a warning, which has no effect for choice symbols.
+NOTE: /home/huang/esp/esp-idf/components/bt/host/nimble/Kconfig.in:1159: Deprecation notice: hex literal '0' without '0x' prefix detected. In the next major version, hex literals will be required to have a '0x' prefix.
+NOTE: /home/huang/esp/esp-idf/components/bt/controller/esp32c3/Kconfig.in:709: Deprecation notice: hex literal '0' without '0x' prefix detected. In the next major version, hex literals will be required to have a '0x' prefix.
+NOTE: /home/huang/esp/esp-idf/components/esp_hw_support/./lowpower/port/esp32p4/Kconfig.p4_rev3_mspi_workaround:6: Deprecation notice: hex literal '0' without '0x' prefix detected. In the next major version, hex literals will be required to have a '0x' prefix.
+NOTE: /home/huang/esp/esp-idf/components/esp_mm/Kconfig:20: Deprecation notice: hex literal '0' without '0x' prefix detected. In the next major version, hex literals will be required to have a '0x' prefix.
+NOTE: /home/huang/esp/esp-idf/components/openthread/Kconfig:116: Deprecation notice: hex literal '0' without '0x' prefix detected. In the next major version, hex literals will be required to have a '0x' prefix.
+[20/23] Building C object CMakeFiles/lab3_1.elf.dir/project_elf_src_esp32c3.c.obj
+[21/23] Linking CXX executable lab3_1.elf
+[22/23] Generating binary image from built executable
+esptool v5.6.0
+Creating ESP32-C3 image...
+Merged 3 ELF sections.
+Successfully created ESP32-C3 image.
+Generated /home/huang/library/cse121/lab3_1/build/lab3_1.bin
+[23/23] cd /home/huang/library/cse121/lab3_1/build && /home/huang/.espressif/python_env/idf6.2_py3.12_env/bin/python /home/huang/esp/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app /home/huang/library/cse121/lab3_1/build/partition_table/partition-table.bin /home/huang/library/cse121/lab3_1/build/lab3_1.bin
+lab3_1.bin binary size 0x30e10 bytes. Smallest app partition is 0x100000 bytes. 0xcf1f0 bytes (81%) free.

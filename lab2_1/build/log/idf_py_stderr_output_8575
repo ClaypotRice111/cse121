@@ -1,0 +1,5 @@
+Command: /home/huang/.espressif/python_env/idf6.2_py3.12_env/bin/python /home/huang/esp/esp-idf/tools/idf_monitor.py -p /dev/ttyACM0 --target esp32c3
+--- esp-idf-monitor 1.10.0 on /dev/ttyACM0 115200
+[1;33m--- WARNING:[0m No ELF files found. Please provide the ELF file paths, required for binary log decoding.
+--- Quit: Ctrl+] | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H
+
