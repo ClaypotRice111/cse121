@@ -1,68 +1,73 @@
-
 #include "DFRobot_LCD.h"
 
+#include "driver/gpio.h"
 #include "esp_check.h"
 #include "esp_rom_sys.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-static constexpr int I2C_TIMEOUT_MS = 1000;
+// ESP32-C3-DevKit-RUST-2 default pins.
+static constexpr gpio_num_t SDA_PIN = GPIO_NUM_7;
+static constexpr gpio_num_t SCL_PIN = GPIO_NUM_8;
+
+static constexpr uint32_t I2C_SPEED = 100000;
+static constexpr int TIMEOUT_MS = 1000;
+
+static void delay_ms(uint32_t ms) {
+    vTaskDelay(pdMS_TO_TICKS(ms) + 1);
+}
 
 DFRobot_RGBLCD1602::DFRobot_RGBLCD1602(
     uint8_t rgbAddr,
-    uint8_t cols,
-    uint8_t rows,
+    uint8_t lcdCols,
+    uint8_t lcdRows,
     uint8_t lcdAddr
 )
     : rgbAddr_(rgbAddr),
       lcdAddr_(lcdAddr),
-      cols_(cols),
-      rows_(rows) {
+      cols_(lcdCols),
+      rows_(lcdRows) {
 }
 
-// Send data to LCD.
-void DFRobot_RGBLCD1602::send(
-    const uint8_t *data,
-    size_t len
-) {
+DFRobot_RGBLCD1602::~DFRobot_RGBLCD1602() {
+    close();
+}
+
+
+// I2C communication
+void DFRobot_RGBLCD1602::send(const uint8_t *data, size_t len) 
+{
     ESP_ERROR_CHECK(
         i2c_master_transmit(
-            lcd_,
-            data,
-            len,
-            I2C_TIMEOUT_MS
+            lcd_, data, len, TIMEOUT_MS
         )
     );
 }
 
-// Write RGB controller register.
-void DFRobot_RGBLCD1602::setReg(
-    uint8_t reg,
-    uint8_t value
-) {
+void DFRobot_RGBLCD1602::setReg(uint8_t reg, uint8_t value) 
+{
     uint8_t data[2] = {reg, value};
 
     ESP_ERROR_CHECK(
         i2c_master_transmit(
-            rgb_,
-            data,
-            sizeof(data),
-            I2C_TIMEOUT_MS
+            rgb_, data, sizeof(data), TIMEOUT_MS
         )
     );
 }
 
-// Send LCD command.
-void DFRobot_RGBLCD1602::command(uint8_t value) {
+
+// LCD commands
+void DFRobot_RGBLCD1602::command(uint8_t value) 
+{
     uint8_t data[2] = {0x80, value};
 
     send(data, sizeof(data));
     esp_rom_delay_us(100);
 }
 
-// Send one character.
-size_t DFRobot_RGBLCD1602::write(uint8_t value) {
+size_t DFRobot_RGBLCD1602::write(uint8_t value) 
+{
     uint8_t data[2] = {0x40, value};
 
     send(data, sizeof(data));
@@ -71,34 +76,92 @@ size_t DFRobot_RGBLCD1602::write(uint8_t value) {
     return 1;
 }
 
-// Replacement for Arduino Print.
-void DFRobot_RGBLCD1602::printstr(
-    const char *str
-) {
+void DFRobot_RGBLCD1602::printstr(const char *str) 
+{
     if (str == nullptr) {
         return;
     }
 
     while (*str != '\0') {
-        write((uint8_t)*str);
-        str++;
+        write(static_cast<uint8_t>(*str));
+        ++str;
     }
 }
 
-// Initialize LCD using shared I2C bus.
-void DFRobot_RGBLCD1602::init(
-    i2c_master_bus_handle_t bus
-) {
+
+// Init Internal I2C bus
+void DFRobot_RGBLCD1602::init() 
+{
+    if (initialized_) {
+        return;
+    }
+
+    // Do not replace an existing bus.
+    if (bus_ != nullptr) {
+        ESP_ERROR_CHECK(ESP_ERR_INVALID_STATE);
+    }
+
+    i2c_master_bus_config_t config = {};
+
+    config.i2c_port = I2C_NUM_0;
+    config.sda_io_num = SDA_PIN;
+    config.scl_io_num = SCL_PIN;
+    config.clk_source = I2C_CLK_SRC_DEFAULT;
+    config.glitch_ignore_cnt = 7;
+    config.flags.enable_internal_pullup = true;
+
+    ESP_ERROR_CHECK(
+        i2c_new_master_bus(&config, &bus_)
+    );
+
+    ownsBus_ = true;
+
+    initDevices(bus_);
+}
+
+
+// Init External I2C bus
+void DFRobot_RGBLCD1602::init(i2c_master_bus_handle_t bus) 
+{
+    if (bus == nullptr) {
+        ESP_ERROR_CHECK(ESP_ERR_INVALID_ARG);
+    }
+
+    if (initialized_) {
+        if (bus_ != bus) {
+            ESP_ERROR_CHECK(ESP_ERR_INVALID_STATE);
+        }
+        return;
+    }
+
+    if (bus_ != nullptr && bus_ != bus) {
+        ESP_ERROR_CHECK(ESP_ERR_INVALID_STATE);
+    }
+
+    bus_ = bus;
+    ownsBus_ = false;
+
+    initDevices(bus_);
+}
+
+
+// Shared device initialization
+void DFRobot_RGBLCD1602::initDevices(i2c_master_bus_handle_t bus) 
+{
+    if (initialized_) {
+        return;
+    }
+
+    if (bus == nullptr) {
+        ESP_ERROR_CHECK(ESP_ERR_INVALID_ARG);
+    }
+
+    i2c_device_config_t config = {};
+
+    config.dev_addr_length = I2C_ADDR_BIT_LEN_7;
+    config.scl_speed_hz = I2C_SPEED;
+
     if (lcd_ == nullptr) {
-
-        i2c_device_config_t config = {};
-
-        config.dev_addr_length =
-            I2C_ADDR_BIT_LEN_7;
-
-        config.scl_speed_hz = 100000;
-
-        // LCD controller.
         config.device_address = lcdAddr_;
 
         ESP_ERROR_CHECK(
@@ -106,8 +169,9 @@ void DFRobot_RGBLCD1602::init(
                 bus, &config, &lcd_
             )
         );
+    }
 
-        // RGB controller.
+    if (rgb_ == nullptr) {
         config.device_address = rgbAddr_;
 
         ESP_ERROR_CHECK(
@@ -117,9 +181,8 @@ void DFRobot_RGBLCD1602::init(
         );
     }
 
-    vTaskDelay(pdMS_TO_TICKS(50));
+    delay_ms(50);
 
-    // Function set: 2-line display.
     uint8_t function = LCD_FUNCTIONSET;
 
     if (rows_ > 1) {
@@ -127,109 +190,31 @@ void DFRobot_RGBLCD1602::init(
     }
 
     command(function);
-    vTaskDelay(pdMS_TO_TICKS(5));
+    delay_ms(5);
 
     command(function);
-    vTaskDelay(pdMS_TO_TICKS(5));
+    delay_ms(5);
 
     command(function);
 
-    // Display on, cursor and blink off.
-    displayControl_ = LCD_DISPLAYON;
-    command(LCD_DISPLAYCONTROL | displayControl_);
+    command(
+        LCD_DISPLAYCONTROL | LCD_DISPLAYON
+    );
 
     clear();
 
-    // Left-to-right entry mode.
-    command(LCD_ENTRYMODESET | LCD_ENTRYLEFT);
+    command(
+        LCD_ENTRYMODESET | LCD_ENTRYLEFT
+    );
 
-    // White backlight.
     setColorWhite();
+
+    initialized_ = true;
 }
 
-void DFRobot_RGBLCD1602::clear() {
-    command(LCD_CLEARDISPLAY);
-    esp_rom_delay_us(2000);
-}
 
-void DFRobot_RGBLCD1602::home() {
-    command(LCD_RETURNHOME);
-    esp_rom_delay_us(2000);
-}
-
-void DFRobot_RGBLCD1602::setCursor(
-    uint8_t col,
-    uint8_t row
-) {
-    if (col >= cols_ || row >= rows_) {
-        return;
-    }
-
-    uint8_t address = col;
-
-    if (row == 1) {
-        address += 0x40;
-    }
-
-    command(LCD_SETDDRAMADDR | address);
-}
-
-// RGB controller version 2.0: 0x2D
-void DFRobot_RGBLCD1602::setRGB(
-    uint8_t r,
-    uint8_t g,
-    uint8_t b
-) {
-    setReg(0x01, r);
-    setReg(0x02, g);
-    setReg(0x03, b);
-}
-
-void DFRobot_RGBLCD1602::setColorWhite() {
-    setRGB(255, 255, 255);
-}
-
-void DFRobot_RGBLCD1602::setBacklight(
-    bool enabled
-) {
-    if (enabled) {
-        setColorWhite();
-    } else {
-        setRGB(0, 0, 0);
-    }
-}
-
-void DFRobot_RGBLCD1602::display() {
-    displayControl_ |= LCD_DISPLAYON;
-    command(LCD_DISPLAYCONTROL | displayControl_);
-}
-
-void DFRobot_RGBLCD1602::noDisplay() {
-    displayControl_ &= ~LCD_DISPLAYON;
-    command(LCD_DISPLAYCONTROL | displayControl_);
-}
-
-void DFRobot_RGBLCD1602::cursor() {
-    displayControl_ |= LCD_CURSORON;
-    command(LCD_DISPLAYCONTROL | displayControl_);
-}
-
-void DFRobot_RGBLCD1602::noCursor() {
-    displayControl_ &= ~LCD_CURSORON;
-    command(LCD_DISPLAYCONTROL | displayControl_);
-}
-
-void DFRobot_RGBLCD1602::blink() {
-    displayControl_ |= LCD_BLINKON;
-    command(LCD_DISPLAYCONTROL | displayControl_);
-}
-
-void DFRobot_RGBLCD1602::stopBlink() {
-    displayControl_ &= ~LCD_BLINKON;
-    command(LCD_DISPLAYCONTROL | displayControl_);
-}
-
-void DFRobot_RGBLCD1602::close() {
+void DFRobot_RGBLCD1602::close() 
+{
     if (lcd_ != nullptr) {
         ESP_ERROR_CHECK(
             i2c_master_bus_rm_device(lcd_)
@@ -243,4 +228,60 @@ void DFRobot_RGBLCD1602::close() {
         );
         rgb_ = nullptr;
     }
+
+    // Delete only internally owned bus.
+    if (ownsBus_ && bus_ != nullptr) {
+        ESP_ERROR_CHECK(
+            i2c_del_master_bus(bus_)
+        );
+    }
+
+    bus_ = nullptr;
+    ownsBus_ = false;
+    initialized_ = false;
+}
+
+
+// Display control
+void DFRobot_RGBLCD1602::clear() 
+{
+    command(LCD_CLEARDISPLAY);
+    esp_rom_delay_us(2000);
+}
+
+
+// Cursor positioning
+void DFRobot_RGBLCD1602::setCursor(uint8_t col, uint8_t row) 
+{
+    if (row >= rows_ || col >= cols_) {
+        return;
+    }
+
+    uint8_t address = col;
+
+    if (row == 1) {
+        address += 0x40;
+    }
+
+    command(
+        LCD_SETDDRAMADDR | address
+    );
+}
+
+
+// RGB backlight
+void DFRobot_RGBLCD1602::setRGB(
+    uint8_t r,
+    uint8_t g,
+    uint8_t b
+) {
+
+    setReg(0x01, r);
+    setReg(0x02, g);
+    setReg(0x03, b);
+}
+
+void DFRobot_RGBLCD1602::setColorWhite() 
+{
+    setRGB(255, 255, 255);
 }

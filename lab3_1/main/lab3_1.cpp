@@ -14,7 +14,7 @@ extern "C" void app_main(void) {
     lcd.printstr("Hello CSE121!");
 
     lcd.setCursor(0, 1);
-    lcd.printstr("Weihao Huang");
+    lcd.printstr("Huang");
 
     while (true) {
         vTaskDelay(pdMS_TO_TICKS(1000));
