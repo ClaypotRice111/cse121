@@ -79,27 +79,21 @@ static float offset_y = 0.0f;
 static esp_hidd_cb_event_t unused_event_type
     __attribute__((unused));
 
-static uint8_t hidd_service_uuid128[] = {
-    0xfb, 0x34, 0x9b, 0x5f,
-    0x80, 0x00, 0x00, 0x80,
-    0x00, 0x10, 0x00, 0x00,
-    0x12, 0x18, 0x00, 0x00
-};
-
+// Compact legacy BLE advertisement (<= 31 bytes). HID service is still in GATT.
 static esp_ble_adv_data_t hidd_adv_data = {
     .set_scan_rsp = false,
     .include_name = true,
-    .include_txpower = true,
-    .min_interval = ESP_BLE_GAP_CONN_ITVL_MS(7.5),
-    .max_interval = ESP_BLE_GAP_CONN_ITVL_MS(20),
+    .include_txpower = false,
+    .min_interval = 0,
+    .max_interval = 0,
     .appearance = 0x03c2,
     .manufacturer_len = 0,
     .p_manufacturer_data = NULL,
     .service_data_len = 0,
     .p_service_data = NULL,
-    .service_uuid_len = sizeof(hidd_service_uuid128),
-    .p_service_uuid = hidd_service_uuid128,
-    .flag = 0x6,
+    .service_uuid_len = 0,
+    .p_service_uuid = NULL,
+    .flag = 0x06,
 };
 
 static esp_ble_adv_params_t hidd_adv_params = {
@@ -310,29 +304,29 @@ static int mouse_delta(
     int speed;
 
     if (magnitude < BIT_TILT) {
-        speed = 2;
+        speed = 1;
     }
     else if (magnitude < LOT_TILT) {
-        speed = 5;
+        speed = 3;
     }
     else {
         speed = 9;
     }
 
-    // Time-based acceleration
-    int multiplier = 1;
+    // // Time-based acceleration
+    // int multiplier = 1;
 
-    if (held_ms >= 700) {
-        multiplier = 4;
-    }
-    else if (held_ms >= 300) {
-        multiplier = 3;
-    }
-    else if (held_ms >= 100) {
-        multiplier = 2;
-    }
+    // if (held_ms >= 700) {
+    //     multiplier = 4;
+    // }
+    // else if (held_ms >= 300) {
+    //     multiplier = 3;
+    // }
+    // else if (held_ms >= 100) {
+    //     multiplier = 2;
+    // }
 
-    int delta = speed * multiplier;
+    int delta = speed;
 
     return acceleration > 0 ? delta : -delta;
 }
@@ -374,13 +368,10 @@ static void hidd_event_callback(
         if (param->init_finish.state ==
             ESP_HIDD_INIT_OK) {
 
-            esp_ble_gap_set_device_name(
-                HIDD_DEVICE_NAME
-            );
-
-            esp_ble_gap_config_adv_data(
-                &hidd_adv_data
-            );
+            esp_err_t name_err = esp_ble_gap_set_device_name(HIDD_DEVICE_NAME);
+            esp_err_t adv_err = esp_ble_gap_config_adv_data(&hidd_adv_data);
+            ESP_LOGI(TAG, "Set name: %s; configure ADV: %s",
+                     esp_err_to_name(name_err), esp_err_to_name(adv_err));
         }
         break;
 
@@ -426,38 +417,29 @@ static void gap_event_handler(
     esp_ble_gap_cb_param_t *param)
 {
     switch (event) {
-
-    case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
-        esp_ble_gap_start_advertising(
-            &hidd_adv_params
-        );
-
-        ESP_LOGI(TAG, "BLE advertising");
-        break;
-
-    case ESP_GAP_BLE_SEC_REQ_EVT:
-        esp_ble_gap_security_rsp(
-            param->ble_security.ble_req.bd_addr,
-            true
-        );
-        break;
-
-    case ESP_GAP_BLE_AUTH_CMPL_EVT:
-        if (param->ble_security.auth_cmpl.success) {
-            sec_conn = true;
-
-            ESP_LOGI(TAG,
-                     "BLE pairing successful");
+    case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT: {
+        ESP_LOGI(TAG, "ADV config status=%d", param->adv_data_cmpl.status);
+        if (param->adv_data_cmpl.status == ESP_BT_STATUS_SUCCESS) {
+            esp_err_t err = esp_ble_gap_start_advertising(&hidd_adv_params);
+            ESP_LOGI(TAG, "Start ADV: %s", esp_err_to_name(err));
         }
-        else {
-            sec_conn = false;
-
-            ESP_LOGE(TAG,
-                     "Pairing failed: 0x%x",
+        break;
+    }
+    case ESP_GAP_BLE_ADV_START_COMPLETE_EVT:
+        ESP_LOGI(TAG, "ADV started status=%d", param->adv_start_cmpl.status);
+        break;
+    case ESP_GAP_BLE_SEC_REQ_EVT:
+        esp_ble_gap_security_rsp(param->ble_security.ble_req.bd_addr, true);
+        break;
+    case ESP_GAP_BLE_AUTH_CMPL_EVT:
+        sec_conn = param->ble_security.auth_cmpl.success;
+        if (sec_conn) {
+            ESP_LOGI(TAG, "BLE pairing/encryption successful");
+        } else {
+            ESP_LOGE(TAG, "Pairing failed: 0x%x",
                      param->ble_security.auth_cmpl.fail_reason);
         }
         break;
-
     default:
         break;
     }

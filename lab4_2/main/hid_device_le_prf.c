@@ -759,7 +759,7 @@ static void hid_add_id_tbl(void)
       hid_rpt_map[0].id = hidReportRefMouseIn[0];
       hid_rpt_map[0].type = hidReportRefMouseIn[1];
       hid_rpt_map[0].handle = hidd_le_env.hidd_inst.att_tbl[HIDD_LE_IDX_REPORT_MOUSE_IN_VAL];
-      hid_rpt_map[0].cccdHandle = hidd_le_env.hidd_inst.att_tbl[HIDD_LE_IDX_REPORT_MOUSE_IN_VAL];
+      hid_rpt_map[0].cccdHandle = hidd_le_env.hidd_inst.att_tbl[HIDD_LE_IDX_REPORT_MOUSE_IN_CCC];
       hid_rpt_map[0].mode = HID_PROTOCOL_MODE_REPORT;
 
       // Key input report
